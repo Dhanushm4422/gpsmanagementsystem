@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="GPSVehicleRegistrationApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+  <style>
+    /* Your CSS styles here */
+    body {
+      font-family: 'Arial', sans-serif;
+      background: url('img/1.jpg') center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-top: 2px;
+      color: #333;
+    }
+
+    input,
+    select {
+      margin-bottom: 15px;
+    }
+
+    .input-group-prepend span {
+      background-color: #FF6600;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #FF6600; 
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #E65100; 
+    }
+
+    #output {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #333;
+      display: none;
+    }
+
+    .error {
+      border: 1px solid red !important;
+    }
+
+    /* Added to center container on small screens */
+    @media (max-width: 768px) {
+      .container {
+        margin-top: 20px;
+      }
+    }
+  </style>
+  <title>GPS Vehicle Registration</title>
+</head>
+<body ng-controller="VehicleRegistrationController as ctrl">
+
+<div class="container">
+  <h2 class="text-center mb-4">GPS Vehicle Registration</h2>
+  <form id="vehicleForm" ng-submit="ctrl.submitForm()">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="vehicleType">Vehicle Type:</label>
+          <select class="form-control" id="vehicleType" name="vehicleType" ng-model="ctrl.vehicleType" required>
+            <option value="bus">Bus</option>
+            <option value="car">Car</option>
+            <option value="bike">Motor Bike</option>
+            <option value="truck">Truck</option>
+            <option value="miniVan">Mini Van</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="vehicleNumber">Vehicle Number:</label>
+          <input type="text" class="form-control" id="vehicleNumber" name="vehicleNumber" ng-model="ctrl.vehicleNumber" ng-pattern="/^[A-Za-z]{2}\d{2}[A-Za-z]{2}\d{4}$/" required>
+          <small class="text-muted">Format: TN33AN0098 (2 letters, 2 numbers, 2 letters, 4 numbers)</small>
+          <div ng-show="vehicleForm.vehicleNumber.$dirty && vehicleForm.vehicleNumber.$error.pattern" class="text-danger">Invalid vehicle number format</div>
+        </div>
+
+        <div class="form-group">
+          <label for="capacity">Capacity:</label>
+          <input type="number" class="form-control" id="capacity" name="capacity" ng-model="ctrl.capacity" min="1" max="70" required>
+          <small class="text-muted">Maximum capacity is 70 seats.</small>
+          <div ng-show="vehicleForm.capacity.$dirty && vehicleForm.capacity.$error.max" class="text-danger">Capacity cannot exceed 70</div>
+          <div ng-show="vehicleForm.capacity.$dirty && vehicleForm.capacity.$error.min" class="text-danger">Capacity must be at least 1</div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="fuelType">Fuel Type:</label>
+          <select class="form-control" id="fuelType" name="fuelType" ng-model="ctrl.fuelType" required>
+            <option value="petrol">Petrol</option>
+            <option value="diesel">Diesel</option>
+            <option value="cng">CNG</option>
+            <option value="electric">Electric</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="phoneNumber">Phone Number:</label>
+          <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" ng-model="ctrl.phoneNumber" ng-pattern="/^[6789]\d{9}$/" required>
+          <small class="text-muted">Format: XXXXXXXXXX (10 numbers, starting with 9, 8, 7, or 6)</small>
+          <div ng-show="vehicleForm.phoneNumber.$dirty && vehicleForm.phoneNumber.$error.pattern" class="text-danger">Invalid phone number format</div>
+        </div>
+
+        <div class="form-group">
+          <label for="status">Status:</label>
+          <select class="form-control" id="status" name="status" ng-model="ctrl.status" required>
+            <option value="inService">In Service</option>
+            <option value="outOfService">Out of Service</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Vehicle</button>
+  </form>
+
+  <div id="output" class="mt-3">{{ ctrl.outputMessage }}</div>
+</div>
+<script>
+  angular.module('GPSVehicleRegistrationApp', [])
+  .controller('VehicleRegistrationController', function($window) {
+    var vm = this;
+
+    vm.submitForm = function() {
+      var vehicleType = vm.vehicleType;
+      var vehicleNumber = vm.vehicleNumber;
+      var capacity = vm.capacity;
+      var fuelType = vm.fuelType;
+      var phoneNumber = vm.phoneNumber;
+      var status = vm.status;
+
+      // Perform form validation
+      if (validateVehicleNumber(vehicleNumber) && validateCapacity(capacity) && validatePhoneNumber(phoneNumber)) {
+        // Form is valid, proceed with submission
+        console.log('Vehicle Type:', vehicleType);
+        console.log('Vehicle Number:', vehicleNumber);
+        console.log('Capacity:', capacity);
+        console.log('Fuel Type:', fuelType);
+        console.log('Phone Number:', phoneNumber);
+        console.log('Status:', status);
+
+        // Display success message
+        vm.outputMessage = 'Vehicle Added successfully! Redirecting...';
+
+        // Redirect to the desired page after a delay
+        setTimeout(function () {
+          $window.location.href = 'driver-details.html'; // Change the URL as needed
+        }, 2000); // 2 seconds delay
+      }
+    };
+
+    function validateVehicleNumber(vehicleNumber) {
+      var regex = /^[A-Za-z]{2}\d{2}[A-Za-z]{2}\d{4}$/;
+      return regex.test(vehicleNumber);
+    }
+
+    function validateCapacity(capacity) {
+      return capacity >= 1 && capacity <= 70;
+    }
+
+    function validatePhoneNumber(phoneNumber) {
+      var regex = /^[6789]\d{9}$/; // 10 digits, starting with 9, 8, 7, or 6
+      return regex.test(phoneNumber);
+    }
+  });
+</script>
+
+</body>
+</html>
